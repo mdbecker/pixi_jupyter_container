@@ -74,8 +74,8 @@ git push
 
 Built images are automatically tagged and pushed to GHCR on every commit:
 
-- Tagged with commit SHA: `ghcr.io/<your-username>/pixi-jupyter:<commit-sha>`
-- Tagged releases: `ghcr.io/<your-username>/pixi-jupyter:<git-tag>`
+- Tagged with commit SHA: `ghcr.io/<your-username>/pixi_jupyter_container:<commit-sha>`
+- Tagged releases: `ghcr.io/<your-username>/pixi_jupyter_container:<git-tag>`
 
 ## Automated Dependency Updates
 

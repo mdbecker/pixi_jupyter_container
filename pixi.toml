@@ -1,5 +1,5 @@
 [project]
-name = "pixi-jupyter"
+name = "pixi_jupyter_container"
 version = "1.0.0"
 channels = ["conda-forge"]
 platforms = ["linux-aarch64"]
