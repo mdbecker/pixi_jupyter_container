@@ -1,0 +1,9 @@
+# .dockerignore
+.git
+.github
+*.log
+*.pyc
+__pycache__/
+node_modules/
+ci-cd.yml
+renovate.json

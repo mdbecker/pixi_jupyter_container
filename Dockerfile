@@ -63,7 +63,8 @@ RUN pixi install && \
     rm -rf ~/.cache && \
     sudo apt-get purge -y --auto-remove build-essential && \
     sudo apt-get clean && \
-    sudo rm -rf /var/lib/apt/lists/*
+    sudo rm -rf /var/lib/apt/lists/* && \
+    sudo rm -rf /tmp/* /var/tmp/*  # Added final cleanup step
 
 USER root
 COPY --chmod=0755 start.sh /usr/local/bin/start.sh
