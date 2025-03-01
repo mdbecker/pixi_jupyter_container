@@ -2,6 +2,7 @@
 name = "pixi-jupyter"
 version = "1.0.0"
 channels = ["conda-forge"]
+platforms = ["linux-aarch64"]
 
 [dependencies]
 python = "3.12.*"
@@ -21,9 +22,11 @@ lz4 = "*"
 nltk = ">=3.6.5"
 opencv = "*"
 requests = ">=2.22.0"
-jupyter_contrib_nbextensions = "*"
+jupyterlab_execute_time = "*"
+ipyflow = "*"
 jupyterthemes = "*"
 
 [pypi-dependencies]
 polyleven = "==0.7"
 uncurl = "==0.0.10"
+jupyterlab-skip-traceback = "*"  # Add it here instead
