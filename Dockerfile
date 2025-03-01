@@ -10,10 +10,8 @@ RUN apt-get update && apt-get install -y curl && \
 
 # Stage 3: Generate pixi.lock
 FROM ubuntu:24.04 AS env-builder
-ARG NB_USER="jovyan"
-ARG NB_UID="1000"
-ARG NB_GID="100"
-ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 HOME="/home/${NB_USER}"
+ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8
+WORKDIR /tmp
 
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -24,17 +22,7 @@ RUN apt-get update && \
 
 COPY --from=pixi-builder /pixi /usr/local/bin/pixi
 
-RUN if grep -q "${NB_UID}" /etc/passwd; then \
-        userdel --remove $(id -un "${NB_UID}"); \
-    fi && \
-    useradd --no-log-init --create-home --shell /bin/bash --uid "${NB_UID}" "${NB_USER}" && \
-    echo "${NB_USER} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/notebook && \
-    chmod g+w /etc/passwd
-
-USER ${NB_USER}
-WORKDIR ${HOME}
-
-COPY --chown=${NB_USER}:${NB_GID} pixi.toml ${HOME}/
+COPY pixi.toml .
 RUN pixi lock
 
 # Stage 4 (Final): Install environment directly in the final image
@@ -44,7 +32,6 @@ ARG NB_UID="1000"
 ARG NB_GID="100"
 ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 HOME="/home/${NB_USER}"
 
-# Install runtime dependencies (build-essential temporarily) and locale setup
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       tini sudo locales ca-certificates fonts-liberation pandoc build-essential && \
@@ -66,10 +53,9 @@ RUN if grep -q "${NB_UID}" /etc/passwd; then \
 USER ${NB_USER}
 WORKDIR ${HOME}
 
-COPY --from=env-builder --chown=${NB_USER}:${NB_GID} ${HOME}/pixi.toml ${HOME}/
-COPY --from=env-builder --chown=${NB_USER}:${NB_GID} ${HOME}/pixi.lock ${HOME}/
+COPY --from=env-builder --chown=${NB_USER}:${NB_GID} /tmp/pixi.toml ${HOME}/
+COPY --from=env-builder --chown=${NB_USER}:${NB_GID} /tmp/pixi.lock ${HOME}/
 
-# Install Pixi environment and cleanup cache/build-essential
 RUN pixi install && \
     pixi shell-hook > ${HOME}/pixi-activate.sh && \
     echo 'exec "$@"' >> ${HOME}/pixi-activate.sh && \
@@ -82,7 +68,6 @@ RUN pixi install && \
 USER root
 COPY --chmod=0755 start.sh /usr/local/bin/start.sh
 
-# Explicitly create the work directory first
 RUN mkdir -p ${HOME}/work && \
     fix-permissions /usr/local/bin/start.sh && \
     fix-permissions ${HOME}/pixi.toml ${HOME}/pixi.lock ${HOME}/pixi-activate.sh ${HOME}/work
