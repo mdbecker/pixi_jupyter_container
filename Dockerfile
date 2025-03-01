@@ -29,25 +29,20 @@ ARG NB_UID="1000"
 ARG NB_GID="100"
 ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 HOME="/home/${NB_USER}"
 
+# Consolidated RUN commands for efficiency
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       tini sudo locales ca-certificates fonts-liberation pandoc build-essential curl && \
     echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && locale-gen && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
-# Download fix-permissions
-RUN curl -fsSL https://raw.githubusercontent.com/jupyter/docker-stacks/refs/heads/main/images/docker-stacks-foundation/fix-permissions \
-        -o /usr/local/bin/fix-permissions && \
-    chmod a+rx /usr/local/bin/fix-permissions
-
-COPY --from=pixi-builder /pixi /usr/local/bin/pixi
-
-RUN if grep -q "${NB_UID}" /etc/passwd; then \
-        userdel --remove $(id -un "${NB_UID}"); \
-    fi && \
+    curl -fsSL https://raw.githubusercontent.com/jupyter/docker-stacks/refs/heads/main/images/docker-stacks-foundation/fix-permissions \
+        -o /usr/local/bin/fix-permissions && chmod a+rx /usr/local/bin/fix-permissions && \
+    if grep -q "${NB_UID}" /etc/passwd; then userdel --remove $(id -un "${NB_UID}"); fi && \
     useradd --no-log-init --create-home --shell /bin/bash --uid "${NB_UID}" "${NB_USER}" && \
     echo "${NB_USER} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/notebook && \
-    chmod g+w /etc/passwd
+    chmod g+w /etc/passwd && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
+
+COPY --from=pixi-builder /pixi /usr/local/bin/pixi
 
 USER ${NB_USER}
 WORKDIR ${HOME}
@@ -70,13 +65,10 @@ COPY --chmod=0755 start.sh /usr/local/bin/start.sh
 
 RUN mkdir -p ${HOME}/work && \
     fix-permissions /usr/local/bin/start.sh && \
-    fix-permissions ${HOME}/pixi.toml ${HOME}/pixi.lock ${HOME}/pixi-activate.sh ${HOME}/work
-
-# Download docker_healthcheck.py (fixed by creating directory first)
-RUN mkdir -p /etc/jupyter && \
+    fix-permissions ${HOME}/pixi.toml ${HOME}/pixi.lock ${HOME}/pixi-activate.sh ${HOME}/work && \
+    mkdir -p /etc/jupyter && \
     curl -fsSL https://raw.githubusercontent.com/jupyter/docker-stacks/refs/heads/main/images/base-notebook/docker_healthcheck.py \
-        -o /etc/jupyter/docker_healthcheck.py && \
-    chmod +x /etc/jupyter/docker_healthcheck.py
+        -o /etc/jupyter/docker_healthcheck.py && chmod +x /etc/jupyter/docker_healthcheck.py
 
 EXPOSE 8888
 
