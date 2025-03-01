@@ -7,3 +7,6 @@ __pycache__/
 node_modules/
 ci-cd.yml
 renovate.json
+*.md
+LICENSE
+docker-compose.yml

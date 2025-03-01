@@ -1,6 +1,38 @@
 {
-  "extends": ["config:base"],
+  "extends": [
+    "config:base",
+    ":dependencyDashboard",
+    ":maintainLockFilesWeekly"
+  ],
+  "schedule": ["before 6am on monday"],
+  "labels": ["dependencies", "renovate"],
+  "prHourlyLimit": 5,
+  "prConcurrentLimit": 10,
   "packageRules": [
-    {"matchFiles": ["pixi.toml"], "manager": "regex"}
-  ]
+    {
+      "matchManagers": ["dockerfile"],
+      "matchPackagePatterns": ["^ubuntu$"],
+      "groupName": "ubuntu-base-image"
+    },
+    {
+      "matchFiles": ["pixi.toml"],
+      "manager": "regex",
+      "groupName": "pixi-dependencies"
+    },
+    {
+      "matchFiles": ["pixi.toml"],
+      "matchDepTypes": ["pypi-dependencies"],
+      "manager": "regex",
+      "groupName": "pypi-dependencies"
+    },
+    {
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": true,
+      "automergeType": "branch"
+    }
+  ],
+  "vulnerabilityAlerts": {
+    "labels": ["security"]
+  },
+  "timezone": "UTC"
 }

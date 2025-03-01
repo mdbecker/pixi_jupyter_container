@@ -1,12 +1,12 @@
 # Stage 1: Download Pixi binary
-FROM ubuntu:24.04 AS pixi-builder
+FROM ubuntu:24.04@sha256:72297848456d5d37d1262630108ab308d3e9ec7ed1c3286a32fe09856619a782 AS pixi-builder
 ARG PIXI_VERSION=0.41.4
 RUN apt-get update && apt-get install -y curl && \
     curl -Ls "https://github.com/prefix-dev/pixi/releases/download/v${PIXI_VERSION}/pixi-$(uname -m)-unknown-linux-musl" \
     -o /pixi && chmod +x /pixi
 
 # Final Stage: Consolidated Environment Setup
-FROM ubuntu:24.04 AS final
+FROM ubuntu:24.04@sha256:72297848456d5d37d1262630108ab308d3e9ec7ed1c3286a32fe09856619a782 AS final
 ARG NB_USER="jovyan"
 ARG NB_UID="1000"
 ARG NB_GID="100"
