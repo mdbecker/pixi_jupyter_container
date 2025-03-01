@@ -28,7 +28,7 @@ ARG NB_UID="1000"
 ARG NB_GID="100"
 ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 HOME="/home/${NB_USER}"
 
-# Single consolidated RUN for all root-level ops
+# Perform ALL root-level operations in a single consolidated RUN command
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       tini sudo locales ca-certificates fonts-liberation pandoc build-essential curl && \
@@ -43,12 +43,22 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 COPY --from=pixi-builder /pixi /usr/local/bin/pixi
-
-USER ${NB_USER}
-WORKDIR ${HOME}
+COPY --chmod=0755 start.sh /usr/local/bin/start.sh
 
 COPY --from=env-builder --chown=${NB_USER}:${NB_GID} /tmp/pixi.toml ${HOME}/
 COPY --from=env-builder --chown=${NB_USER}:${NB_GID} /tmp/pixi.lock ${HOME}/
+
+# Consolidate root-level permission fixes and healthcheck setup
+RUN fix-permissions /usr/local/bin/start.sh \
+                    ${HOME}/pixi.toml \
+                    ${HOME}/pixi.lock \
+                    ${HOME}/work && \
+    curl -fsSL https://raw.githubusercontent.com/jupyter/docker-stacks/refs/heads/main/images/base-notebook/docker_healthcheck.py \
+        -o /etc/jupyter/docker_healthcheck.py && chmod +x /etc/jupyter/docker_healthcheck.py
+
+# NOW switch to non-root user jovyan ONCE and remain jovyan
+USER ${NB_USER}
+WORKDIR ${HOME}
 
 RUN pixi install && \
     pixi shell-hook > ${HOME}/pixi-activate.sh && \
@@ -59,18 +69,6 @@ RUN pixi install && \
     sudo apt-get clean && \
     sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
-USER root
-COPY --chmod=0755 start.sh /usr/local/bin/start.sh
-
-# Single consolidated RUN for permissions and healthcheck setup
-RUN fix-permissions /usr/local/bin/start.sh \
-                    ${HOME}/pixi.toml \
-                    ${HOME}/pixi.lock \
-                    ${HOME}/pixi-activate.sh \
-                    ${HOME}/work && \
-    curl -fsSL https://raw.githubusercontent.com/jupyter/docker-stacks/refs/heads/main/images/base-notebook/docker_healthcheck.py \
-        -o /etc/jupyter/docker_healthcheck.py && chmod +x /etc/jupyter/docker_healthcheck.py
-
 EXPOSE 8888
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
@@ -78,5 +76,4 @@ HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
 
 ENTRYPOINT ["tini", "-g", "--"]
 WORKDIR ${HOME}/work
-USER ${NB_USER}
 CMD ["start.sh"]
