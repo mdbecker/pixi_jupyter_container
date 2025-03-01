@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-test-push:
-    runs-on: macos-13-arm64
+    runs-on: macos-15
     permissions:
       packages: write
       contents: write
@@ -41,11 +41,24 @@ jobs:
       - name: Build Docker Image
         run: docker build -t ghcr.io/${{ github.repository_owner }}/pixi-jupyter:latest .
 
-      - name: Test Jupyter Container
+      - name: Test Jupyter Container with Docker Healthcheck
         run: |
           docker run -d --name test_jupyter -p 8888:8888 ghcr.io/${{ github.repository_owner }}/pixi-jupyter:latest
-          sleep 15
-          curl -f http://localhost:8888 || (docker logs test_jupyter && exit 1)
+
+          retries=12
+          count=0
+          until [ "$(docker inspect --format='{{json .State.Health.Status}}' test_jupyter)" = "\"healthy\"" ]; do
+            if [ $count -eq $retries ]; then
+              echo "Container did not become healthy:"
+              docker logs test_jupyter
+              docker inspect test_jupyter
+              exit 1
+            fi
+            echo "Waiting for container to become healthy ($((count+1))/$retries)..."
+            sleep 5
+            count=$((count+1))
+          done
+
           docker stop test_jupyter
 
       - name: Tag and Push Docker Image
