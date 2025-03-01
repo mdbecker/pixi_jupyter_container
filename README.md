@@ -13,8 +13,6 @@ An optimized, easy-to-maintain, and modern Jupyter Notebook environment built wi
 
 ## Quick Start
 
-### Build & Run Locally
-
 Clone the repository and run:
 
 ```bash
@@ -27,8 +25,6 @@ Jupyter will be available at:
 ```
 http://localhost:8888
 ```
-
-### Accessing Jupyter
 
 By default, token/password authentication is disabled for convenience in local development.
 
@@ -96,6 +92,74 @@ The GitHub Actions workflow handles:
 - Automatic generation and committing of `pixi.lock`.
 - Security vulnerability scanning using [Trivy](https://github.com/aquasecurity/trivy).
 - Publishing container images to GitHub Container Registry.
+
+## Releases and Changelog
+
+Releases are automatically drafted and changelogs generated through [Release Drafter](https://github.com/release-drafter/release-drafter). See the [GitHub Releases](../../releases) page for detailed changelogs and release notes.
+
+## Advanced Usage
+
+### Adding or Removing Packages
+
+1. **Edit `pixi.toml`:** Add new dependencies under `[dependencies]` or `[pypi-dependencies]`.
+2. **Rebuild the Container:**
+   ```bash
+   docker-compose build --no-cache
+   docker-compose up
+   ```
+3. **Verify:** Make sure the new libraries import properly (e.g., `import your_package`).
+
+### Changing Python Versions
+
+To switch Python to another version (e.g., `3.11.x`), edit `pixi.toml`:
+
+```toml
+[dependencies]
+python = "3.11.*"
+```
+
+Then rebuild and test as described above.
+
+### Customizing JupyterLab
+
+- **Themes:** Already includes JupyterThemes (Monokai). Change the theme inside JupyterLab’s settings or run:
+  ```bash
+  jt -t monokai
+  ```
+- **Extensions:** Add extensions to `pixi.toml` (if Conda-available) or to the `[pypi-dependencies]` section (if available via PyPI).
+
+## Troubleshooting
+
+### Jupyter Not Accessible  
+
+- Check if the container is running:
+  ```bash
+  docker ps
+  ```
+- Inspect container logs for errors:
+  ```bash
+  docker logs <container-name>
+  ```
+
+### Cannot Install a New Package with Pixi  
+
+- Modify `pixi.toml` and rebuild the container as shown in [Advanced Usage](#adding-or-removing-packages).
+- If rebuild fails, manually regenerate `pixi.lock` as described above.
+
+### Slow I/O on macOS  
+
+- Use Docker Desktop file sharing optimizations by adding `:delegated` or `:cached` flags to volume mounts in `docker-compose.yml`:
+  ```yaml
+  volumes:
+    - ~/code:/home/jovyan/work:delegated
+  ```
+
+### Environment Out of Sync  
+
+- Delete existing `pixi.lock`, then regenerate it:
+  ```bash
+  pixi lock && pixi install
+  ```
 
 ## Maintenance & Contribution
 
