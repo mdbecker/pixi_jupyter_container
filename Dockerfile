@@ -1,40 +1,26 @@
-# Stage 1: Download the Pixi binary
+# Stage 1: Download Pixi binary
 FROM ubuntu:24.04 AS pixi-builder
 ARG PIXI_VERSION=0.41.4
 RUN apt-get update && apt-get install -y curl && \
     curl -Ls "https://github.com/prefix-dev/pixi/releases/download/v${PIXI_VERSION}/pixi-$(uname -m)-unknown-linux-musl" \
     -o /pixi && chmod +x /pixi
 
-# Stage 2: Generate pixi.lock
-FROM ubuntu:24.04 AS env-builder
-ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8
-WORKDIR /tmp
-
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-      tini sudo locales ca-certificates wget git build-essential openssh-client \
-      imagemagick ffmpeg gifsicle fonts-liberation pandoc run-one netbase && \
-    echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && locale-gen && \
-    apt-get clean && rm -rf /var/lib/apt/lists/*
-
-COPY --from=pixi-builder /pixi /usr/local/bin/pixi
-COPY pixi.toml .
-RUN pixi lock
-
-# Stage 3 (Final): Fully Optimized Environment Setup
+# Final Stage: Consolidated Environment Setup
 FROM ubuntu:24.04 AS final
 ARG NB_USER="jovyan"
 ARG NB_UID="1000"
 ARG NB_GID="100"
 ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 HOME="/home/${NB_USER}"
 
-# Perform ALL root-level operations in a single consolidated RUN command
+# Install all system dependencies and tools once (including Pixi lock)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-      tini sudo locales ca-certificates fonts-liberation pandoc build-essential curl && \
+        tini sudo locales ca-certificates wget git openssh-client \
+        imagemagick ffmpeg gifsicle fonts-liberation pandoc run-one netbase \
+        curl build-essential && \
     echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && locale-gen && \
     curl -fsSL https://raw.githubusercontent.com/jupyter/docker-stacks/refs/heads/main/images/docker-stacks-foundation/fix-permissions \
-        -o /usr/local/bin/fix-permissions && chmod a+rx /usr/local/bin/fix-permissions && \
+        -o /usr/local/bin/fix-permissions && chmod +x /usr/local/bin/fix-permissions && \
     if grep -q "${NB_UID}" /etc/passwd; then userdel --remove $(id -un "${NB_UID}"); fi && \
     useradd --no-log-init --create-home --shell /bin/bash --uid "${NB_UID}" "${NB_USER}" && \
     echo "${NB_USER} ALL=(ALL) NOPASSWD:ALL" > /etc/sudoers.d/notebook && \
@@ -42,25 +28,16 @@ RUN apt-get update && \
     mkdir -p ${HOME}/work /etc/jupyter && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# Copy Pixi binary
 COPY --from=pixi-builder /pixi /usr/local/bin/pixi
-COPY --chmod=0755 start.sh /usr/local/bin/start.sh
 
-COPY --from=env-builder --chown=${NB_USER}:${NB_GID} /tmp/pixi.toml ${HOME}/
-COPY --from=env-builder --chown=${NB_USER}:${NB_GID} /tmp/pixi.lock ${HOME}/
-
-# Consolidate root-level permission fixes and healthcheck setup
-RUN fix-permissions /usr/local/bin/start.sh \
-                    ${HOME}/pixi.toml \
-                    ${HOME}/pixi.lock \
-                    ${HOME}/work && \
-    curl -fsSL https://raw.githubusercontent.com/jupyter/docker-stacks/refs/heads/main/images/base-notebook/docker_healthcheck.py \
-        -o /etc/jupyter/docker_healthcheck.py && chmod +x /etc/jupyter/docker_healthcheck.py
-
-# NOW switch to non-root user jovyan ONCE and remain jovyan
-USER ${NB_USER}
+# Copy project files for Pixi
+COPY pixi.toml ${HOME}/
 WORKDIR ${HOME}
 
-RUN pixi install && \
+# Generate pixi.lock directly here (env-builder stage removed)
+RUN pixi lock && \
+    pixi install && \
     pixi shell-hook > ${HOME}/pixi-activate.sh && \
     echo 'exec "$@"' >> ${HOME}/pixi-activate.sh && \
     chmod +x ${HOME}/pixi-activate.sh && \
@@ -68,6 +45,19 @@ RUN pixi install && \
     sudo apt-get purge -y --auto-remove build-essential && \
     sudo apt-get clean && \
     sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Copy and set up startup scripts and permissions
+COPY --chmod=0755 start.sh /usr/local/bin/start.sh
+
+RUN fix-permissions /usr/local/bin/start.sh \
+                    ${HOME}/pixi.toml \
+                    ${HOME}/pixi.lock \
+                    ${HOME}/work && \
+    curl -fsSL https://raw.githubusercontent.com/jupyter/docker-stacks/main/images/base-notebook/docker_healthcheck.py \
+        -o /etc/jupyter/docker_healthcheck.py && chmod +x /etc/jupyter/docker_healthcheck.py
+
+# Switch to non-root user jovyan ONCE
+USER ${NB_USER}
 
 EXPOSE 8888
 
