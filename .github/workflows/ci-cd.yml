@@ -42,7 +42,7 @@ jobs:
           git diff --cached --quiet || git commit -m "Update pixi.lock [ci skip]" && git push origin HEAD:${{ github.ref_name }}
 
       - name: Cache Docker layers
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: /tmp/.buildx-cache
           key: ${{ runner.os }}-buildx-${{ github.sha }}
@@ -64,7 +64,7 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
-      - name: Test Jupyter Container with Docker Healthcheck
+      - name: Test Jupyter Container with Docker Healthcheck and Smoke Test
         run: |
           docker run -d --name test_jupyter -p 8888:8888 pixi-jupyter:latest
           retries=12
@@ -80,6 +80,7 @@ jobs:
             sleep 5
             count=$((count+1))
           done
+          docker exec test_jupyter bash -c "source /home/jovyan/pixi-activate.sh && python -c 'import numpy; import pandas; import sklearn; print(\"Smoke test passed!\")'"
           docker stop test_jupyter
 
       - name: Security Scan with Trivy

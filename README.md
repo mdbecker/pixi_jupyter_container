@@ -8,7 +8,7 @@ An optimized, easy-to-maintain, and modern Jupyter Notebook environment built wi
 - **Minimal and Efficient**: Based on Ubuntu 24.04 minimal image for smaller, faster containers.
 - **Pre-configured Extensions**: Includes popular Jupyter extensions (execute time, table beautifier, code prettify, execution dependencies, Python markdown).
 - **Stylish Out-of-the-Box**: Pre-themed with JupyterThemes (Monokai style).
-- **Automated Updates & Testing**: GitHub Actions automatically handle dependency updates, testing, lock file generation, and continuous container deployment.
+- **Automated Updates & Testing**: GitHub Actions automatically handle dependency updates, container testing (including smoke tests for essential Python libraries like NumPy, Pandas, and scikit-learn), lock file generation, and continuous container deployment.
 - **Built for ARM64**: Optimized for Apple Silicon (M1/M2 MacBooks).
 
 ## Quick Start
@@ -89,10 +89,13 @@ Automated updates are powered by [Renovate](https://github.com/apps/renovate). I
 
 The GitHub Actions workflow handles:
 
-- Automatic builds on push and pull requests
-- Automated testing (container startup, Jupyter availability)
-- Automatic generation and committing of `pixi.lock`
-- Publishing container images to GitHub Container Registry
+- Automatic builds on push and pull requests.
+- Automated container testing, including:
+  - Docker healthcheck to ensure JupyterLab starts correctly.
+  - Smoke tests verifying critical Python libraries (`NumPy`, `Pandas`, and `scikit-learn`) import successfully.
+- Automatic generation and committing of `pixi.lock`.
+- Security vulnerability scanning using [Trivy](https://github.com/aquasecurity/trivy).
+- Publishing container images to GitHub Container Registry.
 
 ## Maintenance & Contribution
 
@@ -104,4 +107,3 @@ Feel free to open issues or PRs to improve this stack.
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.
-
