@@ -35,7 +35,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-buildx-
 
-      - name: Build Docker Image with Cache
+      - name: Build ARM64 Docker Image with Cache
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -64,7 +64,10 @@ jobs:
           git add pixi.lock
           git diff --cached --quiet || git commit -m "Update pixi.lock [ci skip]" && git push origin HEAD:${{ github.ref_name }}
 
-      - name: Test Jupyter Container with Docker Healthcheck and Smoke Test
+      - name: Set up QEMU for ARM64 runtime emulation
+        uses: docker/setup-qemu-action@v3
+
+      - name: Test Jupyter Container with Docker Healthcheck and Smoke Test (ARM64)
         run: |
           docker run -d --name test_jupyter -p 8888:8888 pixi_jupyter_container:latest
           retries=12
