@@ -27,20 +27,6 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Generate pixi.lock
-        run: |
-          docker build --target env-builder -t pixi-env-builder .
-          docker create --name temp-container pixi-env-builder
-          docker cp temp-container:/home/jovyan/pixi.lock ./pixi.lock
-          docker rm temp-container
-
-      - name: Commit pixi.lock if changed
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add pixi.lock
-          git diff --cached --quiet || git commit -m "Update pixi.lock [ci skip]" && git push origin HEAD:${{ github.ref_name }}
-
       - name: Cache Docker layers
         uses: actions/cache@v4
         with:
@@ -54,7 +40,7 @@ jobs:
         with:
           context: .
           platforms: linux/arm64
-          tags: pixi-jupyter:latest
+          tags: pixi_jupyter_container:latest
           push: false
           cache-from: type=local,src=/tmp/.buildx-cache
           cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
@@ -64,9 +50,22 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
+      - name: Generate pixi.lock from built container
+        run: |
+          docker create --name temp-container pixi_jupyter_container:latest
+          docker cp temp-container:/home/jovyan/pixi.lock ./pixi.lock
+          docker rm temp-container
+
+      - name: Commit pixi.lock if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pixi.lock
+          git diff --cached --quiet || git commit -m "Update pixi.lock [ci skip]" && git push origin HEAD:${{ github.ref_name }}
+
       - name: Test Jupyter Container with Docker Healthcheck and Smoke Test
         run: |
-          docker run -d --name test_jupyter -p 8888:8888 pixi-jupyter:latest
+          docker run -d --name test_jupyter -p 8888:8888 pixi_jupyter_container:latest
           retries=12
           count=0
           until [ "$(docker inspect --format='{{json .State.Health.Status}}' test_jupyter)" = "\"healthy\"" ]; do
@@ -86,7 +85,7 @@ jobs:
       - name: Security Scan with Trivy
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: 'pixi-jupyter:latest'
+          image-ref: 'pixi_jupyter_container:latest'
           format: table
           exit-code: 1
           vulnerability-threshold: CRITICAL
@@ -94,13 +93,13 @@ jobs:
 
       - name: Tag and Push Docker Image
         run: |
-          IMAGE=ghcr.io/${{ github.repository_owner }}/pixi-jupyter
+          IMAGE=ghcr.io/${{ github.repository_owner }}/pixi_jupyter_container
           TAG=${GITHUB_SHA::7}
-          docker tag pixi-jupyter:latest $IMAGE:latest
-          docker tag pixi-jupyter:latest $IMAGE:$TAG
+          docker tag pixi_jupyter_container:latest $IMAGE:latest
+          docker tag pixi_jupyter_container:latest $IMAGE:$TAG
           docker push $IMAGE:$TAG
           docker push $IMAGE:latest
           if [[ "${{ github.ref_type }}" == "tag" ]]; then
-            docker tag pixi-jupyter:latest $IMAGE:${{ github.ref_name }}
+            docker tag pixi_jupyter_container:latest $IMAGE:${{ github.ref_name }}
             docker push $IMAGE:${{ github.ref_name }}
           fi
