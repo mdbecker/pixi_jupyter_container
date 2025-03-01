@@ -1,0 +1,29 @@
+[project]
+name = "pixi-jupyter"
+version = "1.0.0"
+channels = ["conda-forge"]
+
+[dependencies]
+python = "3.12.*"
+jupyterlab = "*"
+notebook = ">=7.2.2"
+numpy = ">=1.17.4"
+pandas = ">=0.25.3"
+scikit-learn = ">=0.21.3"
+scipy = ">=1.3.1"
+seaborn = ">=0.9.0"
+statsmodels = ">=0.10.1"
+beautifulsoup4 = ">=4.8.1"
+ffmpeg-python = "*"
+html5lib = ">=1.0.1"
+lxml = ">=4.6.3"
+lz4 = "*"
+nltk = ">=3.6.5"
+opencv = "*"
+requests = ">=2.22.0"
+jupyter_contrib_nbextensions = "*"
+jupyterthemes = "*"
+
+[pypi-dependencies]
+polyleven = "==0.7"
+uncurl = "==0.0.10"

@@ -1,0 +1,66 @@
+name: CI/CD
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["*"]
+  pull_request:
+
+jobs:
+  build-test-push:
+    runs-on: macos-13-arm64
+    permissions:
+      packages: write
+      contents: write  # <-- Updated permission for committing back to repo
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Needed for commits back to the branch
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker Image and Generate pixi.lock
+        run: |
+          docker build --target env-builder -t pixi-env-builder .
+          docker create --name temp-container pixi-env-builder
+          docker cp temp-container:/tmp/pixi.lock ./pixi.lock
+          docker rm temp-container
+
+      - name: Commit and Push pixi.lock if Changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pixi.lock
+          if ! git diff --cached --exit-code; then
+            git commit -m "Update pixi.lock [ci skip]"
+            git push origin HEAD:${{ github.ref_name }}
+          else
+            echo "No changes to pixi.lock"
+          fi
+
+      - name: Build Final Docker Image
+        run: docker build -t ghcr.io/${{ github.repository_owner }}/pixi-jupyter:latest .
+
+      - name: Test Jupyter Container
+        run: |
+          docker run -d --name test_jupyter -p 8888:8888 ghcr.io/${{ github.repository_owner }}/pixi-jupyter:latest
+          sleep 15
+          curl -f http://localhost:8888 || (docker logs test_jupyter && exit 1)
+          docker stop test_jupyter
+
+      - name: Tag and Push Docker Image
+        run: |
+          IMAGE=ghcr.io/${{ github.repository_owner }}/pixi-jupyter
+          TAG=${GITHUB_SHA::7}
+          docker tag $IMAGE:latest $IMAGE:$TAG
+          docker push $IMAGE:$TAG
+          if [[ "${{ github.ref_type }}" == "tag" ]]; then
+            docker tag $IMAGE:latest $IMAGE:${{ github.ref_name }}
+            docker push $IMAGE:${{ github.ref_name }}
+          fi

@@ -1,0 +1,107 @@
+# Opinionated Custom Jupyter Stack Container
+
+An optimized, easy-to-maintain, and modern Jupyter Notebook environment built with Pixi instead of Conda/Mamba. Designed specifically for efficient data science workflows.
+
+## Features
+
+- **Modern Package Management**: Utilizes [Pixi](https://github.com/prefix-dev/pixi) and UV for fast environment creation and dependency management.
+- **Minimal and Efficient**: Based on Ubuntu 24.04 minimal image for smaller, faster containers.
+- **Pre-configured Extensions**: Includes popular Jupyter extensions (execute time, table beautifier, code prettify, execution dependencies, Python markdown).
+- **Stylish Out-of-the-Box**: Pre-themed with JupyterThemes (Monokai style).
+- **Automated Updates & Testing**: GitHub Actions automatically handle dependency updates, testing, lock file generation, and continuous container deployment.
+- **Built for ARM64**: Optimized for Apple Silicon (M1/M2 MacBooks).
+
+## Quick Start
+
+### Build & Run Locally
+
+Clone the repository and run:
+
+```bash
+docker-compose build
+docker-compose up
+```
+
+Jupyter will be available at:
+
+```
+http://localhost:8888
+```
+
+### Accessing Jupyter
+
+By default, token/password authentication is disabled for convenience in local development.
+
+## Project Structure
+
+```
+.
+├── Dockerfile
+├── docker-compose.yml
+├── pixi.toml
+├── pixi.lock
+├── renovate.json
+├── start.sh
+├── README.md
+└── .github/
+    └── workflows/
+        └── ci-cd.yml
+```
+
+## Dependency Management
+
+Environment dependencies are managed in `pixi.toml`:
+
+- Modify package versions here.
+- The CI/CD workflow automatically generates and updates `pixi.lock`.
+
+### Manually Generating pixi.lock
+
+If the automated pipeline ever fails, you can manually generate the latest `pixi.lock` file and copy it out using:
+
+```bash
+docker build --target env-builder -t pixi-env-builder .
+docker create --name temp-container pixi-env-builder
+docker cp temp-container:/tmp/pixi.lock ./pixi.lock
+docker rm temp-container
+```
+
+Then commit the updated `pixi.lock` file:
+
+```bash
+git add pixi.lock
+git commit -m "Manually update pixi.lock"
+git push
+```
+
+## GitHub Container Registry (GHCR)
+
+Built images are automatically tagged and pushed to GHCR on every commit:
+
+- Tagged with commit SHA: `ghcr.io/<your-username>/pixi-jupyter:<commit-sha>`
+- Tagged releases: `ghcr.io/<your-username>/pixi-jupyter:<git-tag>`
+
+## Automated Dependency Updates
+
+Automated updates are powered by [Renovate](https://github.com/apps/renovate). It keeps your Pixi environment and base images automatically up-to-date via pull requests.
+
+## CI/CD Workflow
+
+The GitHub Actions workflow handles:
+
+- Automatic builds on push and pull requests
+- Automated testing (container startup, Jupyter availability)
+- Automatic generation and committing of `pixi.lock`
+- Publishing container images to GitHub Container Registry
+
+## Maintenance & Contribution
+
+- **Dependency updates**: Renovate creates automatic PRs.
+- **Testing**: Workflow tests changes automatically before merging.
+
+Feel free to open issues or PRs to improve this stack.
+
+## License
+
+Distributed under the MIT License. See `LICENSE` for more information.
+
