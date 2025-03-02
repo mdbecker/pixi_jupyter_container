@@ -68,7 +68,8 @@ USER ${NB_USER}
 EXPOSE 8888
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
-    CMD ["/home/jovyan/pixi-activate.sh", "/etc/jupyter/docker_healthcheck.py"] || exit 1
+    CMD /home/jovyan/pixi-activate.sh /etc/jupyter/docker_healthcheck.py || exit 1
+
 
 ENTRYPOINT ["tini", "-g", "--"]
 WORKDIR ${HOME}/work
