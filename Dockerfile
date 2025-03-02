@@ -43,38 +43,41 @@ COPY --from=pixi-builder /pixi /usr/local/bin/pixi
 COPY pixi.toml ${HOME}/
 WORKDIR ${HOME}
 
+# Properly create pixi-activate.sh by including the shell hook script correctly
 RUN pixi lock && \
     pixi install && \
-    pixi shell-hook > ${HOME}/pixi-activate.sh && \
+    echo '#!/usr/bin/env bash' > ${HOME}/pixi-activate.sh && \
+    pixi shell-hook --change-ps1=false >> ${HOME}/pixi-activate.sh && \
     echo 'exec "$@"' >> ${HOME}/pixi-activate.sh && \
     chmod +x ${HOME}/pixi-activate.sh && \
     rm -rf ~/.cache && \
-    sudo apt-get purge -y --auto-remove build-essential && \
-    sudo apt-get clean && \
-    sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    apt-get purge -y --auto-remove build-essential && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 # Debugging information about Pixi and Jupyter
-RUN /home/jovyan/pixi-activate.sh pixi info && \
-    /home/jovyan/pixi-activate.sh jupyter --version
+RUN ${HOME}/pixi-activate.sh pixi info && \
+    ${HOME}/pixi-activate.sh jupyter --version
 
 COPY --chmod=0755 start.sh /usr/local/bin/start.sh
 
-# === DEBUGGING HEALTHCHECK CHANGE ===
+# Copy Docker Healthcheck script
 COPY docker_healthcheck.py /etc/jupyter/docker_healthcheck.py
 RUN chmod +x /etc/jupyter/docker_healthcheck.py
 
 RUN fix-permissions /usr/local/bin/start.sh \
                     ${HOME}/pixi.toml \
                     ${HOME}/pixi.lock \
+                    ${HOME}/pixi-activate.sh \
                     ${HOME}/work
 
 USER ${NB_USER}
 
 EXPOSE 8888
 
-# Increased start-period for debug purposes
+# Updated healthcheck with increased start-period for stability during startup
 HEALTHCHECK --interval=10s --timeout=5s --start-period=45s --retries=3 \
-    CMD /home/jovyan/pixi-activate.sh /etc/jupyter/docker_healthcheck.py || exit 1
+    CMD ${HOME}/pixi-activate.sh /etc/jupyter/docker_healthcheck.py || exit 1
 
 ENTRYPOINT ["tini", "-g", "--"]
 WORKDIR ${HOME}/work
