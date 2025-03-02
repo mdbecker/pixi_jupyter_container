@@ -14,7 +14,14 @@ FROM ubuntu:24.04@sha256:72297848456d5d37d1262630108ab308d3e9ec7ed1c3286a32fe098
 ARG NB_USER="jovyan"
 ARG NB_UID="1000"
 ARG NB_GID="100"
-ENV DEBIAN_FRONTEND=noninteractive LANG=C.UTF-8 HOME="/home/${NB_USER}"
+
+# Explicitly set NB_USER, NB_UID, NB_GID at runtime
+ENV NB_USER=${NB_USER} \
+    NB_UID=${NB_UID} \
+    NB_GID=${NB_GID} \
+    DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8 \
+    HOME="/home/${NB_USER}"
 
 RUN --mount=type=cache,id=apt-cache-final,target=/var/cache/apt \
     --mount=type=cache,id=apt-lists-final,target=/var/lib/apt/lists \
@@ -61,7 +68,7 @@ USER ${NB_USER}
 EXPOSE 8888
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
-    CMD /etc/jupyter/docker_healthcheck.py || exit 1
+    CMD ["/home/jovyan/pixi-activate.sh", "/etc/jupyter/docker_healthcheck.py"] || exit 1
 
 ENTRYPOINT ["tini", "-g", "--"]
 WORKDIR ${HOME}/work
