@@ -1,12 +1,12 @@
-# Opinionated Custom Jupyter Stack Container
+# Opinionated Custom JupyterLab Stack Container
 
-An optimized, easy-to-maintain, and modern Jupyter Notebook environment built with Pixi instead of Conda/Mamba. Designed specifically for efficient data science workflows.
+An optimized, easy-to-maintain, and modern JupyterLab environment built with Pixi instead of Conda/Mamba. Designed specifically for efficient data science workflows.
 
 ## Features
 
-- **Modern Package Management**: Utilizes [Pixi](https://github.com/prefix-dev/pixi) and UV for fast environment creation and dependency management.
+- **Modern Package Management**: Utilizes [Pixi](https://github.com/prefix-dev/pixi) for fast environment creation and dependency management.
 - **Minimal and Efficient**: Based on Ubuntu 24.04 minimal image for smaller, faster containers.
-- **Pre-configured Extensions**: Includes popular Jupyter extensions (execute time, table beautifier, code prettify, execution dependencies, Python markdown).
+- **Pre-configured Extensions**: Includes popular JupyterLab extensions (`jupyterlab_execute_time`, `ipyflow`) for improved productivity.
 - **Stylish Out-of-the-Box**: Pre-themed with JupyterThemes (Monokai style).
 - **Automated Updates & Testing**: GitHub Actions automatically handle dependency updates, container testing (including smoke tests for essential Python libraries like NumPy, Pandas, and scikit-learn), lock file generation, and continuous container deployment.
 - **Built for ARM64**: Optimized for Apple Silicon (M1/M2 MacBooks).
@@ -16,33 +16,39 @@ An optimized, easy-to-maintain, and modern Jupyter Notebook environment built wi
 Clone the repository and run:
 
 ```bash
-docker-compose build
-docker-compose up
+docker compose build
+docker compose up
 ```
 
-Jupyter will be available at:
+JupyterLab will be available at:
 
 ```
 http://localhost:8888
 ```
 
-By default, token/password authentication is disabled for convenience in local development.
+By default, token/password authentication is disabled for convenience in local development. (Do **not** use this configuration in production.)
 
 ## Project Structure
 
 ```
 .
+├── .dockerignore
+├── .github
+│   ├── release-drafter.yml
+│   └── workflows
+│       ├── ci-cd.yml
+│       └── release-drafter.yml
 ├── Dockerfile
+├── LICENSE
+├── README.md
+├── ci-cd.yml
 ├── docker-compose.yml
 ├── pixi.toml
-├── pixi.lock
 ├── renovate.json
-├── start.sh
-├── README.md
-└── .github/
-    └── workflows/
-        └── ci-cd.yml
+└── start.sh
 ```
+
+The file `pixi.lock` is generated automatically during builds.
 
 ## Dependency Management
 
@@ -51,14 +57,15 @@ Environment dependencies are managed in `pixi.toml`:
 - Modify package versions here.
 - The CI/CD workflow automatically generates and updates `pixi.lock`.
 
-### Manually Generating pixi.lock
+### Manually Generating `pixi.lock`
 
-If the automated pipeline ever fails, you can manually generate the latest `pixi.lock` file and copy it out using:
+If the automated pipeline ever fails, you can manually generate the latest `pixi.lock` file by running:
 
 ```bash
-docker build --target env-builder -t pixi-env-builder .
-docker create --name temp-container pixi-env-builder
-docker cp temp-container:/tmp/pixi.lock ./pixi.lock
+docker build -t pixi_jupyter_container:latest .
+
+docker create --name temp-container pixi_jupyter_container:latest
+docker cp temp-container:/home/jovyan/pixi.lock ./pixi.lock
 docker rm temp-container
 ```
 
@@ -74,8 +81,14 @@ git push
 
 Built images are automatically tagged and pushed to GHCR on every commit:
 
-- Tagged with commit SHA: `ghcr.io/<your-username>/pixi_jupyter_container:<commit-sha>`
-- Tagged releases: `ghcr.io/<your-username>/pixi_jupyter_container:<git-tag>`
+- Tagged with commit SHA:  
+  ```
+  ghcr.io/<your-username>/pixi_jupyter_container:<commit-sha>
+  ```
+- Tagged releases:  
+  ```
+  ghcr.io/<your-username>/pixi_jupyter_container:<git-tag>
+  ```
 
 ## Automated Dependency Updates
 
@@ -104,18 +117,18 @@ Releases are automatically drafted and changelogs generated through [Release Dra
 1. **Edit `pixi.toml`:** Add new dependencies under `[dependencies]` or `[pypi-dependencies]`.
 2. **Rebuild the Container:**
    ```bash
-   docker-compose build --no-cache
-   docker-compose up
+   docker compose build --no-cache
+   docker compose up
    ```
 3. **Verify:** Make sure the new libraries import properly (e.g., `import your_package`).
 
 ### Changing Python Versions
 
-To switch Python to another version (e.g., `3.11.x`), edit `pixi.toml`:
+To switch Python to another version (e.g., `3.12.*`), edit `pixi.toml`:
 
 ```toml
 [dependencies]
-python = "3.11.*"
+python = "3.12.*"
 ```
 
 Then rebuild and test as described above.
@@ -130,7 +143,7 @@ Then rebuild and test as described above.
 
 ## Troubleshooting
 
-### Jupyter Not Accessible  
+### JupyterLab Not Accessible  
 
 - Check if the container is running:
   ```bash
