@@ -15,7 +15,6 @@ ARG NB_USER="jovyan"
 ARG NB_UID="1000"
 ARG NB_GID="100"
 
-# Explicitly set NB_USER, NB_UID, NB_GID at runtime
 ENV NB_USER=${NB_USER} \
     NB_UID=${NB_UID} \
     NB_GID=${NB_GID} \
@@ -54,16 +53,15 @@ RUN pixi lock && \
     sudo apt-get clean && \
     sudo rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# Debugging information about Pixi and Jupyter
+RUN /home/jovyan/pixi-activate.sh pixi info && \
+    /home/jovyan/pixi-activate.sh jupyter --version
+
 COPY --chmod=0755 start.sh /usr/local/bin/start.sh
 
-# === DEBUGGING CHANGE BELOW ===
+# === DEBUGGING HEALTHCHECK CHANGE ===
 COPY docker_healthcheck.py /etc/jupyter/docker_healthcheck.py
 RUN chmod +x /etc/jupyter/docker_healthcheck.py
-
-# Original fetching step temporarily commented out for debugging
-# RUN curl -fsSL https://raw.githubusercontent.com/jupyter/docker-stacks/main/images/base-notebook/docker_healthcheck.py \
-#     -o /etc/jupyter/docker_healthcheck.py && chmod +x /etc/jupyter/docker_healthcheck.py
-# === DEBUGGING CHANGE ABOVE ===
 
 RUN fix-permissions /usr/local/bin/start.sh \
                     ${HOME}/pixi.toml \
@@ -74,7 +72,8 @@ USER ${NB_USER}
 
 EXPOSE 8888
 
-HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
+# Increased start-period for debug purposes
+HEALTHCHECK --interval=10s --timeout=5s --start-period=45s --retries=3 \
     CMD /home/jovyan/pixi-activate.sh /etc/jupyter/docker_healthcheck.py || exit 1
 
 ENTRYPOINT ["tini", "-g", "--"]

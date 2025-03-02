@@ -73,24 +73,32 @@ jobs:
           retries=12
           count=0
           until [ "$(docker inspect --format='{{json .State.Health.Status}}' test_jupyter)" = "\"healthy\"" ]; do
+            echo "==== Container logs at retry $count ===="
+            docker logs test_jupyter || true
+      
             if [ $count -eq $retries ]; then
               echo "Container did not become healthy:"
               docker logs test_jupyter
               docker inspect test_jupyter
-
+      
               echo "==== Fetching healthcheck debug log ===="
               docker cp test_jupyter:/tmp/healthcheck_debug.log ./healthcheck_debug.log || echo "Failed to copy debug log"
               echo "==== Debug log contents ===="
               cat ./healthcheck_debug.log || echo "No debug log found."
-
+      
               exit 1
             fi
             echo "Waiting for container to become healthy ($((count+1))/$retries)..."
             sleep 5
             count=$((count+1))
           done
+      
+          # Additional verification of Python & Pixi environment
+          docker exec test_jupyter bash -c "source /home/jovyan/pixi-activate.sh && python --version && pixi info"
+      
           docker exec test_jupyter bash -c "source /home/jovyan/pixi-activate.sh && python -c 'import numpy; import pandas; import sklearn; print(\"Smoke test passed!\")'"
           docker stop test_jupyter
+
 
       - name: Security Scan with Trivy
         uses: aquasecurity/trivy-action@master
