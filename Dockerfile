@@ -56,6 +56,10 @@ RUN pixi lock && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# PURPOSEFULLY PRE-BUILD JUPYTER CACHE
+RUN ${HOME}/pixi-activate.sh jupyter --version && \
+    ${HOME}/pixi-activate.sh jupyter lab --generate-config
+
 COPY --chmod=0755 start.sh /usr/local/bin/start.sh
 
 # Copy Docker Healthcheck script
