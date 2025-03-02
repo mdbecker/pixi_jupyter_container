@@ -285,7 +285,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/scikit-learn-1.6.1-py312h2605d20_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/scipy-1.15.2-py312hb5459e8_0.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/sdl2-2.32.50-h7851d19_1.conda
-      - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/sdl3-3.2.4-h9cc03ad_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/sdl3-3.2.6-h9cc03ad_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/seaborn-0.13.2-hd8ed1ab_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/seaborn-base-0.13.2-pyhd8ed1ab_3.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/send2trash-1.8.3-pyh0d859eb_1.conda
@@ -714,7 +714,7 @@ packages:
   - python >=3.9
   license: ISC
   purls:
-  - pkg:pypi/certifi?source=compressed-mapping
+  - pkg:pypi/certifi?source=hash-mapping
   size: 162721
   timestamp: 1739515973129
 - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/cffi-1.17.1-py312hac81daf_0.conda
@@ -1379,7 +1379,7 @@ packages:
   license: Apache-2.0
   license_family: APACHE
   purls:
-  - pkg:pypi/importlib-metadata?source=compressed-mapping
+  - pkg:pypi/importlib-metadata?source=hash-mapping
   size: 29141
   timestamp: 1737420302391
 - conda: https://conda.anaconda.org/conda-forge/noarch/importlib_resources-6.5.2-pyhd8ed1ab_0.conda
@@ -1767,7 +1767,7 @@ packages:
   license: BSD-3-Clause
   license_family: BSD
   purls:
-  - pkg:pypi/jupyter-events?source=compressed-mapping
+  - pkg:pypi/jupyter-events?source=hash-mapping
   size: 23647
   timestamp: 1738765986736
 - conda: https://conda.anaconda.org/conda-forge/noarch/jupyter_server-2.15.0-pyhd8ed1ab_0.conda
@@ -4384,9 +4384,9 @@ packages:
   purls: []
   size: 523908
   timestamp: 1740516151246
-- conda: https://conda.anaconda.org/conda-forge/linux-aarch64/sdl3-3.2.4-h9cc03ad_0.conda
-  sha256: af6e96ddbf53a52f06714b715851f4cc0a684e26011da93974525535cc3a1da7
-  md5: ecc9ec84f3a1d4d903a12d8b5c68e077
+- conda: https://conda.anaconda.org/conda-forge/linux-aarch64/sdl3-3.2.6-h9cc03ad_0.conda
+  sha256: 5920c1796239a014169c9967b786388db5d5ded51967765bd7371434bbe8a39d
+  md5: 22231796d6701caa42771612e0aeb99b
   depends:
   - dbus >=1.13.6,<2.0a0
   - jack >=1.9.22,<1.10.0a0
@@ -4410,8 +4410,8 @@ packages:
   platform: linux
   license: Zlib
   purls: []
-  size: 1655503
-  timestamp: 1739553425173
+  size: 1685144
+  timestamp: 1740899563116
 - conda: https://conda.anaconda.org/conda-forge/noarch/seaborn-0.13.2-hd8ed1ab_3.conda
   noarch: python
   sha256: ea29a69b14dd6be5cdeeaa551bf50d78cafeaf0351e271e358f9b820fcab4cb0
