@@ -77,6 +77,12 @@ jobs:
               echo "Container did not become healthy:"
               docker logs test_jupyter
               docker inspect test_jupyter
+
+              echo "==== Fetching healthcheck debug log ===="
+              docker cp test_jupyter:/tmp/healthcheck_debug.log ./healthcheck_debug.log || echo "Failed to copy debug log"
+              echo "==== Debug log contents ===="
+              cat ./healthcheck_debug.log || echo "No debug log found."
+
               exit 1
             fi
             echo "Waiting for container to become healthy ($((count+1))/$retries)..."

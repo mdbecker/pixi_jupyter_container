@@ -56,12 +56,19 @@ RUN pixi lock && \
 
 COPY --chmod=0755 start.sh /usr/local/bin/start.sh
 
+# === DEBUGGING CHANGE BELOW ===
+COPY docker_healthcheck.py /etc/jupyter/docker_healthcheck.py
+RUN chmod +x /etc/jupyter/docker_healthcheck.py
+
+# Original fetching step temporarily commented out for debugging
+# RUN curl -fsSL https://raw.githubusercontent.com/jupyter/docker-stacks/main/images/base-notebook/docker_healthcheck.py \
+#     -o /etc/jupyter/docker_healthcheck.py && chmod +x /etc/jupyter/docker_healthcheck.py
+# === DEBUGGING CHANGE ABOVE ===
+
 RUN fix-permissions /usr/local/bin/start.sh \
                     ${HOME}/pixi.toml \
                     ${HOME}/pixi.lock \
-                    ${HOME}/work && \
-    curl -fsSL https://raw.githubusercontent.com/jupyter/docker-stacks/main/images/base-notebook/docker_healthcheck.py \
-        -o /etc/jupyter/docker_healthcheck.py && chmod +x /etc/jupyter/docker_healthcheck.py
+                    ${HOME}/work
 
 USER ${NB_USER}
 
@@ -69,7 +76,6 @@ EXPOSE 8888
 
 HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
     CMD /home/jovyan/pixi-activate.sh /etc/jupyter/docker_healthcheck.py || exit 1
-
 
 ENTRYPOINT ["tini", "-g", "--"]
 WORKDIR ${HOME}/work
