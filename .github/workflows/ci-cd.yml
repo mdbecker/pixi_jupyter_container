@@ -51,18 +51,32 @@ jobs:
           rm -rf /tmp/.buildx-cache
           mv /tmp/.buildx-cache-new /tmp/.buildx-cache
 
+      # Detect changes to pixi.toml
+      - name: Detect if pixi.toml changed
+        id: check_pixi_toml
+        run: |
+          if git diff --name-only HEAD^ HEAD | grep -q 'pixi.toml'; then
+            echo "pixi_changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "pixi_changed=false" >> $GITHUB_OUTPUT
+          fi
+
+      # CONDITIONALLY generate pixi.lock
       - name: Generate pixi.lock from built container
+        if: steps.check_pixi_toml.outputs.pixi_changed == 'true'
         run: |
           docker create --name temp-container pixi_jupyter_container:latest
           docker cp temp-container:/home/jovyan/pixi.lock ./pixi.lock
           docker rm temp-container
 
+      # CONDITIONALLY commit pixi.lock
       - name: Commit pixi.lock if changed
+        if: steps.check_pixi_toml.outputs.pixi_changed == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add pixi.lock
-          git diff --cached --quiet || git commit -m "Update pixi.lock [ci skip]" && git push origin HEAD:${{ github.ref_name }}
+          git diff --cached --quiet || (git commit -m "Update pixi.lock [ci skip]" && git push origin HEAD:${{ github.ref_name }})
 
       - name: Set up QEMU for ARM64 runtime emulation
         uses: docker/setup-qemu-action@v3
@@ -85,7 +99,6 @@ jobs:
           done
           docker exec test_jupyter bash -c "source /home/jovyan/pixi-activate.sh && python -c 'import numpy; import pandas; import sklearn; print(\"Smoke test passed!\")'"
           docker stop test_jupyter
-
 
       - name: Security Scan with Trivy
         uses: aquasecurity/trivy-action@master
