@@ -106,8 +106,8 @@ jobs:
           image-ref: 'pixi_jupyter_container:latest'
           format: table
           exit-code: 1
-          vulnerability-threshold: CRITICAL
           ignore-unfixed: true
+          severity: CRITICAL
 
       - name: Tag and Push Docker Image
         run: |
