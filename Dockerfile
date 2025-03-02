@@ -62,15 +62,13 @@ RUN ${HOME}/pixi-activate.sh jupyter --version && \
 
 COPY --chmod=0755 start.sh /usr/local/bin/start.sh
 
-# Copy Docker Healthcheck script
-COPY docker_healthcheck.py /etc/jupyter/docker_healthcheck.py
-RUN chmod +x /etc/jupyter/docker_healthcheck.py
-
 RUN fix-permissions /usr/local/bin/start.sh \
                     ${HOME}/pixi.toml \
                     ${HOME}/pixi.lock \
                     ${HOME}/pixi-activate.sh \
-                    ${HOME}/work
+                    ${HOME}/work && \
+    curl -fsSL https://raw.githubusercontent.com/jupyter/docker-stacks/main/images/base-notebook/docker_healthcheck.py \
+        -o /etc/jupyter/docker_healthcheck.py && chmod +x /etc/jupyter/docker_healthcheck.py
 
 USER ${NB_USER}
 
