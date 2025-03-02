@@ -15,6 +15,7 @@ ARG NB_USER="jovyan"
 ARG NB_UID="1000"
 ARG NB_GID="100"
 
+# Explicitly set NB_USER, NB_UID, NB_GID at runtime
 ENV NB_USER=${NB_USER} \
     NB_UID=${NB_UID} \
     NB_GID=${NB_GID} \
@@ -54,10 +55,6 @@ RUN pixi lock && \
     apt-get purge -y --auto-remove build-essential && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
-
-# Debugging information about Pixi and Jupyter
-RUN ${HOME}/pixi-activate.sh pixi info && \
-    ${HOME}/pixi-activate.sh jupyter --version
 
 COPY --chmod=0755 start.sh /usr/local/bin/start.sh
 
