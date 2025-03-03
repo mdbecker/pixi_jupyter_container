@@ -1,21 +1,24 @@
 # syntax=docker/dockerfile:1.4
 
-# Stage 1: Download Pixi binary
-FROM ubuntu:24.04@sha256:72297848456d5d37d1262630108ab308d3e9ec7ed1c3286a32fe09856619a782 AS pixi-builder
-ARG PIXI_VERSION=0.41.4
-RUN --mount=type=cache,id=apt-cache-pixi-builder,target=/var/cache/apt \
-    --mount=type=cache,id=apt-lists-pixi-builder,target=/var/lib/apt/lists \
-    apt-get update && apt-get install -y curl && \
-    curl -Ls "https://github.com/prefix-dev/pixi/releases/download/v${PIXI_VERSION}/pixi-$(uname -m)-unknown-linux-musl" \
-    -o /pixi && chmod +x /pixi
+# Stage 1: Download Latest Pixi Binary
+FROM ubuntu:latest AS pixi-builder
+# Install curl and jq for querying the GitHub API
+RUN apt-get update && apt-get install -y curl jq
+# Query GitHub API for the latest Pixi release tag, then download and extract the binary
+RUN latest=$(curl -s https://api.github.com/repos/prefix-dev/pixi/releases/latest | jq -r .tag_name) && \
+    echo "Latest Pixi release: ${latest}" && \
+    curl -Ls "https://github.com/prefix-dev/pixi/releases/download/${latest}/pixi-$(uname -m)-unknown-linux-musl.tar.gz" -o /pixi.tar.gz && \
+    tar -xzf /pixi.tar.gz -C / && \
+    chmod +x /pixi && \
+    rm /pixi.tar.gz
 
 # Final Stage: Consolidated Environment Setup
-FROM ubuntu:24.04@sha256:72297848456d5d37d1262630108ab308d3e9ec7ed1c3286a32fe09856619a782 AS final
+FROM ubuntu:latest AS final
 ARG NB_USER="jovyan"
 ARG NB_UID="1000"
 ARG NB_GID="100"
 
-# Explicitly set NB_USER, NB_UID, NB_GID at runtime
+# Set environment variables for the notebook user
 ENV NB_USER=${NB_USER} \
     NB_UID=${NB_UID} \
     NB_GID=${NB_GID} \
@@ -40,6 +43,7 @@ RUN --mount=type=cache,id=apt-cache-final,target=/var/cache/apt \
     mkdir -p ${HOME}/work /etc/jupyter && \
     apt-get clean && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
+# Copy the Pixi binary from the builder stage
 COPY --from=pixi-builder /pixi /usr/local/bin/pixi
 COPY pixi.toml ${HOME}/
 WORKDIR ${HOME}
@@ -69,6 +73,9 @@ RUN fix-permissions /usr/local/bin/start.sh \
                     ${HOME}/work && \
     curl -fsSL https://raw.githubusercontent.com/jupyter/docker-stacks/main/images/base-notebook/docker_healthcheck.py \
         -o /etc/jupyter/docker_healthcheck.py && chmod +x /etc/jupyter/docker_healthcheck.py
+
+# Recursively set ownership of the home directory to NB_USER (jovyan)
+RUN chown -R ${NB_USER}:${NB_USER} ${HOME}
 
 USER ${NB_USER}
 
