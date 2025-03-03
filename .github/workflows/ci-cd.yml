@@ -98,7 +98,8 @@ jobs:
           exit-code: 1
           ignore-unfixed: true
           severity: CRITICAL
-          args: --scanners vuln --timeout 15m
+          scanners: vuln
+          timeout: 15m0s
 
       - name: Tag and Push Docker Image
         run: |
