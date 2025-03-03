@@ -1304,8 +1304,7 @@ packages:
   - certifi
   license: BSD-3-Clause
   license_family: BSD
-  purls:
-  - pkg:pypi/httpcore?source=hash-mapping
+  purls: []
   size: 48959
   timestamp: 1731707562362
 - conda: https://conda.anaconda.org/conda-forge/noarch/httpx-0.28.1-pyhd8ed1ab_0.conda
@@ -3756,7 +3755,7 @@ packages:
   - python >=3.9
   license: ISC
   purls:
-  - pkg:pypi/pexpect?source=compressed-mapping
+  - pkg:pypi/pexpect?source=hash-mapping
   size: 53561
   timestamp: 1733302019362
 - conda: https://conda.anaconda.org/conda-forge/noarch/pickleshare-0.7.5-pyhd8ed1ab_1004.conda
@@ -4468,7 +4467,7 @@ packages:
   license: Apache-2.0
   license_family: Apache
   purls:
-  - pkg:pypi/sniffio?source=hash-mapping
+  - pkg:pypi/sniffio?source=compressed-mapping
   size: 15019
   timestamp: 1733244175724
 - conda: https://conda.anaconda.org/conda-forge/noarch/soupsieve-2.5-pyhd8ed1ab_1.conda
@@ -4804,7 +4803,7 @@ packages:
   license: MIT
   license_family: MIT
   purls:
-  - pkg:pypi/wheel?source=hash-mapping
+  - pkg:pypi/wheel?source=compressed-mapping
   size: 62931
   timestamp: 1733130309598
 - conda: https://conda.anaconda.org/conda-forge/noarch/widgetsnbextension-4.0.13-pyhd8ed1ab_1.conda
