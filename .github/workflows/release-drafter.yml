@@ -7,7 +7,7 @@ on:
   pull_request:
     types: [opened, reopened, synchronize]
   schedule:
-    - cron: "0 3 * * 1"  # Every Monday at 03:00 UTC
+    - cron: "17 4 * * 2"  # Every Tuesday at 04:17 AM UTC
 
 jobs:
   update_release_draft:
@@ -17,6 +17,6 @@ jobs:
       pull-requests: write
 
     steps:
-      - uses: release-drafter/release-drafter@v6
+      - uses: release-drafter/release-drafter@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
