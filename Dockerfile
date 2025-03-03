@@ -64,6 +64,10 @@ RUN pixi lock && \
 RUN ${HOME}/pixi-activate.sh jupyter --version && \
     ${HOME}/pixi-activate.sh jupyter lab --generate-config
 
+# Set the default theme to dark mode by creating the user settings file
+RUN mkdir -p ${HOME}/.jupyter/lab/user-settings/@jupyterlab/apputils-extension/ && \
+    echo '{ "theme": "JupyterLab Dark" }' > ${HOME}/.jupyter/lab/user-settings/@jupyterlab/apputils-extension/themes.jupyterlab-settings
+
 COPY --chmod=0755 start.sh /usr/local/bin/start.sh
 
 RUN fix-permissions /usr/local/bin/start.sh \
