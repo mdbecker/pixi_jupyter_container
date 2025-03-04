@@ -1,16 +1,15 @@
 # Opinionated Custom JupyterLab Stack Container
 
-An optimized, easy-to-maintain, and modern JupyterLab environment built with Pixi (instead of Conda/Mamba). This container is designed for efficient data science workflows and always pulls the latest bleeding-edge versions of all external dependencies at build time.
+An easy-to-maintain and modern JupyterLab environment built with Pixi (instead of Conda/Mamba). This container is designed to make it quick and easy to spin up jupyterlab with all my favorite tools, while keeping everything up to date.
 
 ## Features
 
-- **Modern Package Management**: Utilizes [Pixi](https://github.com/prefix-dev/pixi) for fast environment creation and dependency management.
-- **Minimal and Efficient**: Based on Ubuntu 24.04 (or latest) for smaller, faster containers.
-- **Bleeding-Edge Updates**: Always fetches the latest Ubuntu image, Pixi binary, and Python packages (as defined in `pixi.toml`) during each build.
-- **Pre-configured Extensions**: Includes popular JupyterLab extensions (`jupyterlab_execute_time`, `ipyflow`) for improved productivity.
-- **Stylish Out-of-the-Box**: Pre-themed with JupyterThemes (Monokai style).
-- **Automated Testing & Lock File Generation**: GitHub Actions automatically rebuild the container on a regular schedule, run smoke tests (including checks for essential Python libraries like NumPy, Pandas, and scikit-learn), and generate an updated `pixi.lock` file that captures the resolved versions.
-- **Built for ARM64**: Optimized for Apple Silicon (M1/M2 MacBooks).
+- **Modern Package Management**: Utilizes [Pixi](https://github.com/prefix-dev/pixi) for fast environment creation and reliable dependency management.
+- **Standard Base Image**: Based on the official Ubuntu image (`ubuntu:latest`) to provide familiarity and broad compatibility.
+- **Up-to-date**: Pulls updates for the Ubuntu image, Pixi binary, and Python packages (as defined in `pixi.toml`) during each build.
+- **Pre-configured Extensions**: Includes JupyterLab extensions (`jupyterlab_execute_time`, `ipyflow`) that provide useful enhancements to the notebook interface.
+- **Automated Testing & Lock File Generation**: GitHub Actions regularly rebuild the container, execute smoke tests (checking imports for key Python libraries like NumPy, Pandas, and scikit-learn), and regenerate the `pixi.lock` file to record exact dependency versions, ensuring we always have the latest working versions.
+- **Built for ARM64**: Built natively for ARM64, ensuring compatibility with Apple Silicon.
 
 ## Quick Start
 
@@ -27,7 +26,7 @@ JupyterLab will be available at:
 http://localhost:8888
 ```
 
-By default, token/password authentication is disabled for convenience in local development. (Do **not** use this configuration in production.)
+By default, token/password authentication is disabled for convenience during local development. (Do **not** use this configuration in production.)
 
 ## Project Structure
 
@@ -42,22 +41,21 @@ By default, token/password authentication is disabled for convenience in local d
 ├── Dockerfile
 ├── LICENSE
 ├── README.md
-├── ci-cd.yml
 ├── docker-compose.yml
 ├── pixi.toml
 ├── pixi.lock
 └── start.sh
 ```
 
-*Note:* The file `pixi.lock` is generated automatically during every build to capture the exact versions of all installed dependencies.
+*Note:* The file `pixi.lock` is generated automatically during every build, capturing exact versions of all installed dependencies.
 
 ## Dependency Management
 
 Environment dependencies are defined in `pixi.toml`:
 
 - **Modify package versions here:** Edit `pixi.toml` to add, remove, or adjust dependencies.
-- **Latest Versions on Every Build:** The container always pulls the most up-to-date versions from external sources. For example, the Dockerfile downloads the latest Pixi binary by querying GitHub’s API, and the Ubuntu base image is referenced without a fixed digest.
-- **Lock File Snapshot:** Every build regenerates `pixi.lock` so you can see exactly which versions were installed. This allows you to review changes over time and pin any dependencies if needed.
+- **Latest Versions on Every Build:** The container fetches the most current versions from external sources during builds. For example, the Dockerfile queries GitHub's API to download the latest Pixi binary, and the Ubuntu base image is always pulled using the `latest` tag.
+- **Lock File Snapshot:** Every build regenerates `pixi.lock`, capturing exact versions of all dependencies installed. This helps you track changes over time and pin specific dependencies as needed.
 
 ### Manually Generating `pixi.lock`
 
@@ -92,28 +90,19 @@ Built images are automatically tagged and pushed to GHCR on every commit:
   ghcr.io/<your-username>/pixi_jupyter_container:<git-tag>
   ```
 
-## Scheduled Builds and Latest Dependencies
-
-The container is rebuilt on a regular schedule to always pull the latest and greatest versions of all external dependencies. In particular:
-
-- **Dynamic Dockerfile Updates:** The Ubuntu base image is referenced without a fixed digest (or with a broad tag like `ubuntu:24.04`), ensuring new updates are always fetched.
-- **Latest Pixi Binary:** The Dockerfile queries the GitHub API for the latest Pixi release and downloads that binary.
-- **Python Packages:** The version constraints in `pixi.toml` are kept broad to allow the newest compatible versions.
-- **Scheduled Rebuilds:** A cron schedule in the GitHub Actions workflow triggers periodic container builds (e.g., every Monday at 3:00 AM UTC), ensuring your environment remains current.
-
 ## CI/CD Workflow
 
-The GitHub Actions workflow handles:
+The GitHub Actions workflow automates:
 
-- **Scheduled Builds:** In addition to push and pull request triggers, a cron schedule (e.g., `0 3 * * 1`) automatically triggers container builds.
-- **Container Testing:** Automated tests include a Docker healthcheck and smoke tests that verify critical Python libraries (like NumPy, Pandas, and scikit-learn) import correctly.
-- **Lock File Generation:** The workflow always regenerates `pixi.lock` on every build, providing a snapshot of the installed dependency versions.
-- **Security Scanning:** Uses [Trivy](https://github.com/aquasecurity/trivy) for vulnerability scanning.
-- **Publishing Images:** Automatically tags and pushes container images to GHCR.
+- **Scheduled Builds:** Regularly triggered container builds keep the environment current.
+- **Container Testing:** Automated health checks and smoke tests verify essential Python libraries (NumPy, Pandas, scikit-learn) import successfully.
+- **Lock File Generation:** The workflow regenerates `pixi.lock` each build, providing a snapshot of installed dependency versions.
+- **Security Scanning:** Utilizes [Trivy](https://github.com/aquasecurity/trivy) to detect vulnerabilities.
+- **Publishing Images:** Automatically tags and publishes container images to GHCR.
 
 ## Releases and Changelog
 
-Releases are automatically drafted and changelogs are generated through [Release Drafter](https://github.com/release-drafter/release-drafter). See the [GitHub Releases](../../releases) page for detailed changelogs and release notes.
+Releases are automatically drafted, and changelogs are generated through [Release Drafter](https://github.com/release-drafter/release-drafter). See the [GitHub Releases](../../releases) page for detailed changelogs and release notes.
 
 ## Advanced Usage
 
@@ -140,11 +129,8 @@ Then rebuild and test as described above.
 
 ### Customizing JupyterLab
 
-- **Themes:** The container includes JupyterThemes (Monokai by default). Change the theme inside JupyterLab’s settings or run:
-  ```bash
-  jt -t monokai
-  ```
-- **Extensions:** Add extensions to `pixi.toml` (if available via Conda) or to the `[pypi-dependencies]` section (if available via PyPI).
+- **Themes:** Customize themes directly within JupyterLab's settings or by installing compatible theme extensions.
+- **Extensions:** Add extensions to `pixi.toml` (Conda) or `[pypi-dependencies]` (PyPI).
 
 ## Troubleshooting
 
@@ -162,7 +148,7 @@ Then rebuild and test as described above.
 ### Cannot Install a New Package with Pixi  
 
 - Modify `pixi.toml` and rebuild the container as shown in [Advanced Usage](#adding-or-removing-packages).
-- If the rebuild fails, manually regenerate `pixi.lock` as described above.
+- If rebuild fails, manually regenerate `pixi.lock` as described above.
 
 ### Slow I/O on macOS  
 
@@ -179,14 +165,19 @@ Then rebuild and test as described above.
   pixi lock && pixi install
   ```
 
-## Maintenance & Contribution
+## Volume Mounts (Customizing Your Environment)
 
-- **Dependency Updates:**  
-  The container always pulls the latest versions during scheduled builds. The generated `pixi.lock` file provides a snapshot of what is installed; if a build fails, you can choose to pin a dependency in `pixi.toml`.
-- **Testing:**  
-  The CI/CD pipeline automatically tests changes before deployment.
-- **Contributions:**  
-  Contributions are welcome! Feel free to open issues or pull requests to improve this stack.
+By default, the provided `docker-compose.yml` mounts common directories (e.g., `~/.ssh`, `~/Downloads`, `~/Documents`, and `~/git`) to match typical workflows. Modify these mounts to fit your specific directory structure or personal workflow preferences.
+
+Example adjustment:
+
+```yaml
+volumes:
+  - ~/.ssh:/home/jovyan/.ssh
+  - ~/code:/home/jovyan/work:rw
+```
+
+Change these paths as needed for your environment.
 
 ## License
 

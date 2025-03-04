@@ -7,7 +7,6 @@ platforms = ["linux-aarch64"]
 [dependencies]
 python = "*"
 jupyterlab = "*"
-notebook = "*"
 numpy = "*"
 pandas = "*"
 scikit-learn = "*"
@@ -24,7 +23,6 @@ opencv = "*"
 requests = "*"
 jupyterlab_execute_time = "*"
 ipyflow = "*"
-jupyterthemes = "*"
 
 [pypi-dependencies]
 polyleven = "*"
